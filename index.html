@@ -1,74 +1,85 @@
 
+# Générer une nouvelle version du fichier HTML avec redimensionnement dynamique du canvas
+corrected_html = f"""
 <!DOCTYPE html>
 <html>
 <head>
   <title>Suivi Voiture - Circuit Réel</title>
   <style>
-    body {
+    body {{
       margin: 0;
       background-color: #f0f0f0;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-    }
-    #canvas {
+    }}
+    canvas {{
       border: 2px solid #333;
-    }
+      display: block;
+    }}
   </style>
 </head>
 <body>
-  <canvas id="canvas" width="800" height="600"></canvas>
+  <canvas id="canvas"></canvas>
 
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
     const image = new Image();
-    image.src = 'circuit_trace.png';
-    image.onload = () => {
-      ctx.drawImage(image, 0, 0);
-    };
+    image.src = 'circuit_trace_clean.png';
 
-    // Coordonnées GPS extrêmes de l'image
-    const latTop = 50.53036993;
-    const latBottom = 50.52805164;
-    const lonLeft = 18.09037002;
-    const lonRight = 18.09750702;
+    // Coordonnées GPS extrêmes
+    const latTop = {lat_max};
+    const latBottom = {lat_min};
+    const lonLeft = {lon_min};
+    const lonRight = {lon_max};
 
-    function gpsToPixel(lat, lon) {
-      const x = (lon - lonLeft) / (lonRight - lonLeft) * canvas.width;
-      const y = (latTop - lat) / (latTop - latBottom) * canvas.height;
+    function gpsToPixel(lat, lon, imgWidth, imgHeight) {{
+      const x = (lon - lonLeft) / (lonRight - lonLeft) * imgWidth;
+      const y = (latTop - lat) / (latTop - latBottom) * imgHeight;
       return [x, y];
-    }
+    }}
 
-    function drawDot(x, y) {
-      ctx.drawImage(image, 0, 0); // redraw background
+    function drawDot(x, y, imgWidth, imgHeight) {{
+      ctx.clearRect(0, 0, imgWidth, imgHeight);
+      ctx.drawImage(image, 0, 0, imgWidth, imgHeight);
       ctx.beginPath();
       ctx.arc(x, y, 6, 0, 2 * Math.PI);
       ctx.fillStyle = "green";
       ctx.fill();
-    }
+    }}
 
-    function updatePosition(position) {
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
-      const [x, y] = gpsToPixel(lat, lon);
-      drawDot(x, y);
-    }
+    image.onload = () => {{
+      canvas.width = image.width;
+      canvas.height = image.height;
+      ctx.drawImage(image, 0, 0);
 
-    function error(err) {
-      alert("Erreur GPS : " + err.message);
-    }
-
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(updatePosition, error, {
-        enableHighAccuracy: true,
-        maximumAge: 0
-      });
-    } else {
-      alert("Géolocalisation non supportée");
-    }
+      if (navigator.geolocation) {{
+        navigator.geolocation.watchPosition((position) => {{
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          const [x, y] = gpsToPixel(lat, lon, image.width, image.height);
+          drawDot(x, y, image.width, image.height);
+        }}, (err) => {{
+          alert("Erreur GPS : " + err.message);
+        }}, {{
+          enableHighAccuracy: true,
+          maximumAge: 0
+        }});
+      }} else {{
+        alert("Géolocalisation non supportée");
+      }}
+    }};
   </script>
 </body>
 </html>
+"""
+
+# Sauvegarder le nouveau fichier HTML corrigé
+corrected_html_path = "/mnt/data/index_responsive.html"
+with open(corrected_html_path, "w", encoding="utf-8") as f:
+    f.write(corrected_html)
+
+corrected_html_path
