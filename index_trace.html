@@ -1,0 +1,74 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Suivi Voiture - Circuit Réel</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    #canvas {
+      border: 2px solid #333;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="800" height="600"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    const image = new Image();
+    image.src = 'circuit_trace.png';
+    image.onload = () => {
+      ctx.drawImage(image, 0, 0);
+    };
+
+    // Coordonnées GPS extrêmes de l'image
+    const latTop = 50.53036993;
+    const latBottom = 50.52805164;
+    const lonLeft = 18.09037002;
+    const lonRight = 18.09750702;
+
+    function gpsToPixel(lat, lon) {
+      const x = (lon - lonLeft) / (lonRight - lonLeft) * canvas.width;
+      const y = (latTop - lat) / (latTop - latBottom) * canvas.height;
+      return [x, y];
+    }
+
+    function drawDot(x, y) {
+      ctx.drawImage(image, 0, 0); // redraw background
+      ctx.beginPath();
+      ctx.arc(x, y, 6, 0, 2 * Math.PI);
+      ctx.fillStyle = "green";
+      ctx.fill();
+    }
+
+    function updatePosition(position) {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      const [x, y] = gpsToPixel(lat, lon);
+      drawDot(x, y);
+    }
+
+    function error(err) {
+      alert("Erreur GPS : " + err.message);
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(updatePosition, error, {
+        enableHighAccuracy: true,
+        maximumAge: 0
+      });
+    } else {
+      alert("Géolocalisation non supportée");
+    }
+  </script>
+</body>
+</html>
